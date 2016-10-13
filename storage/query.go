@@ -23,9 +23,8 @@ type QueryBuilder interface {
 // A ConditionBuilder provides a simple means of building complex value
 // assertions that limit a query result.
 type ConditionBuilder interface {
-	Condition(property string, value interface{}, operator Operator) ConditionBuilder
+	Condition(property string, value interface{}, operator Operator, negate ...bool) ConditionBuilder
 	ConditionGroup(conjunction Conjunction) ConditionBuilder
-	Negate(bool) ConditionBuilder
 }
 
 // Condition records an assertion to which fetched data must adhere. A

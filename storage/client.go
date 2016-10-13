@@ -36,4 +36,5 @@ type Fetcher interface {
 	Fetch(interface{}) (more bool, err error)
 	FetchOne(interface{}) error
 	FetchAll([]interface{}) error
+	Empty() bool
 }
