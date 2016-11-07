@@ -2,6 +2,22 @@ package types
 
 import "testing"
 
+func TestField_Name(t *testing.T) {
+	t.Parallel()
+	t.Run("Fields should return their names", func(t *testing.T) {
+		name := "test_field_name"
+		fields := []Field{
+			&StringField{field{name}, []string{}},
+			&BooleanField{field{name}, []bool{}},
+		}
+		for _, f := range fields {
+			if n := f.Name(); n != name {
+				t.Errorf("Expected %T to return its name (%s). Got: %s", f, name, n)
+			}
+		}
+	})
+}
+
 func TestStringField_Values(t *testing.T) {
 	t.Parallel()
 	t.Run("Values should return a slice of strings", func(t *testing.T) {
@@ -72,17 +88,48 @@ func TestStrings(t *testing.T) {
 	})
 }
 
-func TestField_Name(t *testing.T) {
+func TestBooleanField_Values(t *testing.T) {
 	t.Parallel()
-	t.Run("Fields should return their names", func(t *testing.T) {
-		name := "test_field_name"
-		fields := []Field{
-			&StringField{field{name}, []string{}},
-			&BooleanField{field{name}, []bool{}},
+	t.Run("Values should return a slice of bools", func(t *testing.T) {
+		table := [][]bool{
+			[]bool{},
+			[]bool{true},
+			[]bool{false},
+			[]bool{false, false},
+			[]bool{false, true},
+			[]bool{true, false},
+			[]bool{true, true},
 		}
-		for _, f := range fields {
-			if n := f.Name(); n != name {
-				t.Errorf("Expected %T to return its name (%s). Got: %s", f, name, n)
+		for _, values := range table {
+			f := &BooleanField{field{"test_field"}, values}
+			v, _ := f.Values()
+			if res, ok := v.([]bool); !ok {
+				t.Errorf("Expected slice of bools. Got: %T", res)
+			}
+		}
+	})
+	t.Run("Values should set a slice of bools if passed bool arguments", func(t *testing.T) {
+		f := &BooleanField{field{"test_field"}, []bool{true, false, true}}
+		set := []bool{true, false, true}
+		v, _ := f.Values(set[0], set[1], set[2])
+		res, ok := v.([]bool)
+		if !ok {
+			t.Errorf("Expected slice of bool. Got: %T", res)
+		}
+		for i := 0; i < len(set); i++ {
+			if res[i] != set[i] {
+				t.Errorf("Expected values to match. Expected: %s Got: %s", set[i], res[i])
+			}
+		}
+	})
+	t.Run("Values should return an error if passed non-bool values", func(t *testing.T) {
+		sets := [][]interface{}{
+			[]interface{}{true, false, "dog"},
+		}
+		for _, set := range sets {
+			f := &BooleanField{field{"test_field"}, []bool{true, false, true}}
+			if _, err := f.Values(set[0], set[1], set[2]); err == nil {
+				t.Error("Expected error, got none.")
 			}
 		}
 	})
