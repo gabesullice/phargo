@@ -1,16 +1,9 @@
 package storage
 
-import "errors"
+type MockRunner func() (Fetcher, error)
 
-type MockRunner struct {
-	RunFunc func() (shouldFail bool)
-}
-
-func (q MockRunner) Run() (res Fetcher, err error) {
-	if q.RunFunc() {
-		err = errors.New("MockQuery.Run() failed.")
-	}
-	return MockFetcher{}, err
+func (f MockRunner) Run() (Fetcher, error) {
+	return f()
 }
 
 type MockQuery struct {

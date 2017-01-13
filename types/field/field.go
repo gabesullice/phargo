@@ -75,6 +75,10 @@ func (f *BooleanField) Values(v ...interface{}) (interface{}, error) {
 	return f.values, nil
 }
 
+func (f *BooleanField) Booleans() []bool {
+	return f.values
+}
+
 func Booleans(f Field) ([]bool, error) {
 	if bf, ok := f.(*BooleanField); ok {
 		return bf.values, nil
@@ -88,5 +92,45 @@ func toBool(v interface{}) (bool, error) {
 		return false, errors.New("Tried to use a non-bool value in a bool context.")
 	} else {
 		return b, nil
+	}
+}
+
+type IntegerField struct {
+	field
+	values []int
+}
+
+func (f *IntegerField) Values(v ...interface{}) (interface{}, error) {
+	if len(v) > 0 {
+		var values []int
+		for _, val := range v {
+			i, err := toInt(val)
+			if err != nil {
+				return f.values, err
+			}
+			values = append(values, i)
+		}
+		f.values = values
+	}
+	return f.values, nil
+}
+
+func (f *IntegerField) Integers() []int {
+	return f.values
+}
+
+func Integers(f Field) ([]int, error) {
+	if bf, ok := f.(*IntegerField); ok {
+		return bf.values, nil
+	} else {
+		return nil, errors.New("Tried to extract integer values from non IntegerField.")
+	}
+}
+
+func toInt(v interface{}) (int, error) {
+	if i, ok := v.(int); !ok {
+		return 0, errors.New("Tried to use a non-int value in an int context.")
+	} else {
+		return i, nil
 	}
 }

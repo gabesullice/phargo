@@ -134,3 +134,75 @@ func TestBooleanField_Values(t *testing.T) {
 		}
 	})
 }
+
+func TestBooleans(t *testing.T) {
+	t.Run("Booleans should return a slice of strings from a BooleanField", func(t *testing.T) {
+		bools := [][]bool{
+			[]bool{},
+			[]bool{false},
+			[]bool{false, true},
+		}
+		for _, expected := range bools {
+			f := &BooleanField{field{"test_field"}, expected}
+			actual, _ := Booleans(f)
+			for i := 0; i < len(expected); i++ {
+				if expected[i] != actual[i] {
+					t.Errorf("Expected %s to equal %s", expected[i], actual[i])
+				}
+			}
+		}
+	})
+	t.Run("Strings should return an error if passed a non StringField", func(t *testing.T) {
+		_, err := Strings(&BooleanField{field{"test_field"}, []bool{true}})
+		if err == nil {
+			t.Error("Expected error, go none.")
+		}
+	})
+}
+
+func TestIntegerField_Values(t *testing.T) {
+	t.Parallel()
+	t.Run("Values should return a slice of ints", func(t *testing.T) {
+		table := [][]int{
+			[]int{},
+			[]int{1},
+			[]int{0},
+			[]int{0, 0},
+			[]int{0, 1},
+			[]int{1, 0},
+			[]int{1, 1},
+		}
+		for _, values := range table {
+			f := &IntegerField{field{"test_field"}, values}
+			v, _ := f.Values()
+			if res, ok := v.([]int); !ok {
+				t.Errorf("Expected slice of ints. Got: %T", res)
+			}
+		}
+	})
+	t.Run("Values should set a slice of ints if passed int arguments", func(t *testing.T) {
+		f := &IntegerField{field{"test_field"}, []int{1, 0, 1}}
+		set := []int{1, 0, 1}
+		v, _ := f.Values(set[0], set[1], set[2])
+		res, ok := v.([]int)
+		if !ok {
+			t.Errorf("Expected slice of ints. Got: %T", res)
+		}
+		for i := 0; i < len(set); i++ {
+			if res[i] != set[i] {
+				t.Errorf("Expected values to match. Expected: %s Got: %s", set[i], res[i])
+			}
+		}
+	})
+	t.Run("Values should return an error if passed non-int values", func(t *testing.T) {
+		sets := [][]interface{}{
+			[]interface{}{1, 0, "dog"},
+		}
+		for _, set := range sets {
+			f := &IntegerField{field{"test_field"}, []int{1, 0, 1}}
+			if _, err := f.Values(set[0], set[1], set[2]); err == nil {
+				t.Error("Expected error, got none.")
+			}
+		}
+	})
+}
