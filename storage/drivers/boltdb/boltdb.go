@@ -17,7 +17,7 @@ type Client struct {
 type preparedQuery struct {
 	db       *b.DB
 	dataType []byte
-	term     term
+	fn       func(*result) func(tx *b.Tx) error
 }
 
 // Wraps the BoltDB DB connection struct.
@@ -67,29 +67,34 @@ func (c Client) Execute(q storage.Query) (storage.Fetcher, error) {
 }
 
 func (c Client) compile(q storage.Query) (storage.Runner, error) {
-	return preparedQuery{db: c.db}, nil
+	return preparedQuery{
+		db: c.db
+		fn: buildTransaction(q)
+	}, nil
 }
 
 func (q preparedQuery) Run() (storage.Fetcher, error) {
 	var r result
-	fn := func() func(tx *b.Tx) error {
-		return q.buildTransaction(&r)
-	}
-	err := q.db.View(fn())
+	err := q.db.View(fn(&r))
 	return r, err
 }
 
-func (q preparedQuery) buildTransaction(r *result) func(tx *b.Tx) error {
-	return func(tx *b.Tx) error {
-		bkt := tx.Bucket([]byte("datatypes")).Bucket(q.dataType).Cursor()
-		if bkt == nil {
-			return errors.Errorf("Bucket %s.%s does not exist", "datatypes", q.dataType)
+func buildTransaction(q storage.Query) func (*result) func(tx *b.Tx) error {
+	filter := buildFilter(q)
+	return func (r *result) func (tx *b.Tx) {
+		func(tx *b.Tx) error {
+			bkt := tx.Bucket([]byte("datatypes"))
+			if bkt == nil {
+				return errors.Errorf("Bucket %s does not exist", "datatypes")
+			}
+			r.cursor = bkt.Cursor()
+			r.filter = filter
+			r.close = make(chan struct{})
+			go func(tx *b.Tx) {
+				<-r.close
+			}(tx)
+			return nil
 		}
-		r.close = make(chan struct{})
-		go func(tx *b.Tx) {
-			<-r.close
-		}(tx)
-		return nil
 	}
 }
 

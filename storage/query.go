@@ -4,8 +4,9 @@ package storage
 // fetch data from a datastore.
 type Query interface {
 	Conditions() []Condition
-	Range() (offset, limit int)
+	Range() (offset, limit uint)
 	Count() bool
+	Type() string
 }
 
 // A QueryBuilder provides a simple means to additively construct new Queries.
